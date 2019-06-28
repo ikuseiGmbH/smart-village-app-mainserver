@@ -3,7 +3,7 @@
 module Types
   class GeoLocationType < Types::BaseObject
     field :id, ID, null: false
-    field :latitude, Float, null: false
-    field :longitude, Float, null: false
+    field :latitude, AnyPrimitiveType, null: false
+    field :longitude, AnyPrimitiveType, null: false
   end
 end

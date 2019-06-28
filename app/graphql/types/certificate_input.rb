@@ -2,6 +2,6 @@
 
 module Types
   class CertificateInput < BaseInputObject
-    argument :name, String, required: true
+    argument :name, String, required: false
   end
 end

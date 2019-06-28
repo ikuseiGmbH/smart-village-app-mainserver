@@ -5,8 +5,8 @@ module Types
     field :id, ID, null: true
     field :caption_text, String, null: true
     field :copyright, String, null: true
-    field :height, Integer, null: true
-    field :width, Integer, null: true
+    field :height, AnyPrimitiveType, null: true
+    field :width, AnyPrimitiveType, null: true
     field :content_type, String, null: true
     field :source_url, WebUrlType, null: true
   end
