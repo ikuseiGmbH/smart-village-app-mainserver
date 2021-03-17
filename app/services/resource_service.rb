@@ -12,6 +12,9 @@ class ResourceService
   def create(resource_class, params)
     @params = params
 
+    # cleanup params for given :id
+    @old_resource_id = @params.delete(:id)
+
     # Wenn die Rolle Restricted eine Information anlegt,
     # so ist diese per default nicht sichtbar, es sei denn
     # das Attribute 'visible' wird in den params mitgegeben und ist 'true'
@@ -36,8 +39,15 @@ class ResourceService
     resource_or_error_message(@resource)
   end
 
+  # Find old resource
+  #
+  # @return [Object] Instance of @resource_class
   def find_old_resource
-    @external_resource.try(:external)
+    if @old_resource_id.present?
+      @resource_class.filtered_for_current_user(@data_provider.user).find_by(id: @old_resource_id)
+    else
+      @external_resource.try(:external)
+    end
   end
 
   def create_or_recreate
@@ -49,7 +59,7 @@ class ResourceService
   end
 
   def update_resource
-    # @old_resource.update(@params)
+    # @old_resource.magic_update(@params)
     @old_resource.destroy if @old_resource.present?
     create_new_resource
 
@@ -93,7 +103,7 @@ class ResourceService
     ExternalReference.find_by(
       data_provider: @data_provider,
       external_type: @resource_class,
-      unique_id: resource.unique_id
+      unique_id: @resource.unique_id
     )
   end
 
