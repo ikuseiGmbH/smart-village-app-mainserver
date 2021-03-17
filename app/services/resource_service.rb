@@ -35,8 +35,7 @@ class ResourceService
       return @old_resource
     end
 
-    create_or_recreate
-    resource_or_error_message(@resource)
+    resource_or_error_message(update_or_create)
   end
 
   # Find old resource
@@ -50,7 +49,7 @@ class ResourceService
     end
   end
 
-  def create_or_recreate
+  def update_or_create
     if @old_resource.present?
       update_resource
     else
@@ -59,11 +58,31 @@ class ResourceService
   end
 
   def update_resource
-    # @old_resource.magic_update(@params)
-    @old_resource.destroy if @old_resource.present?
-    create_new_resource
+    # find all association names to delete for a resource
+    association_names_to_delete = @resource_class
+                                    .reflect_on_all_associations
+                                    .select { |a| a.options[:dependent] == :destroy }.map(&:name)
+
+    # delete all nested resources
+    association_names_to_delete.each do |association_name|
+      associations = @old_resource.send(association_name)
+      associations.destroy_all if !is_singular?(association_name) && associations.any?
+      associations.destroy if is_singular?(association_name) && associations.present?
+    end
+
+    # update all attributes and recreate nested resources
+    @old_resource.update(@params)
+
+    ExternalReference.create(
+      data_provider: @old_resource.data_provider,
+      external_id: @old_resource.id,
+      external_type: @resource_class,
+      unique_id: @old_resource.unique_id
+    )
 
     set_default_categories if @resource.respond_to?(:categories)
+
+    @old_resource
   end
 
   def create_new_resource
@@ -72,9 +91,9 @@ class ResourceService
       if @resource.save
         create_external_resource
         set_default_categories if @resource.respond_to?(:categories)
-      else
-        GraphQL::ExecutionError.new("Invalid input: #{@resource.errors.full_messages.join(', ')}")
       end
+
+      @resource
     end
   end
 
@@ -110,9 +129,9 @@ class ResourceService
   def create_external_resource
     ExternalReference.create(
       data_provider: @data_provider,
-      external_id: resource.id,
+      external_id: @resource.id,
       external_type: @resource_class,
-      unique_id: resource.unique_id
+      unique_id: @resource.unique_id
     )
   end
 
@@ -136,5 +155,11 @@ class ResourceService
       category = Category.find_by(id: cat_id)
       @resource.categories << category unless @resource.category_ids.include?(cat_id.to_i)
     end
+  end
+
+  def is_singular?(str)
+    str = str.to_s
+
+    str.singularize == str
   end
 end
