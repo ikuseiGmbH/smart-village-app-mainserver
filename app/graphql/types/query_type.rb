@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../loaders/directus_loader"
+require_relative "../loaders/apollo_loader"
 
 module Types
   class QueryType < Types::BaseObject
@@ -148,6 +149,18 @@ module Types
 
     def directus(query:)
       DirectusLoader.load(query).then do |results|
+        results["data"] unless results["errors"]
+      end
+    end
+    ####################################
+
+    # PASS THROUGH FOR APOLLO ENDPOINT
+    field :apollo, GraphQL::Types::JSON, null: false do
+      argument :query, String, required: false
+    end
+
+    def apollo(query:)
+      ApolloLoader.load(query).then do |results|
         results["data"] unless results["errors"]
       end
     end

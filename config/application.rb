@@ -66,4 +66,17 @@ module SmartVillageAppMainserver
 
     DirectusClient.allow_dynamic_queries = true
   end
+
+  graphql_endpoint_apollo = "https://apollo.bad-belzig.smart-village.app/graphql" # Rails.application.credentials.dig(:apollo, :graphql_endpoint)
+
+  if graphql_endpoint_apollo
+    ApolloHTTPAdapter = GraphQL::Client::HTTP.new(graphql_endpoint_apollo)
+
+    ::ApolloClient = GraphQL::Client.new(
+      schema: GraphQL::Client.load_schema(SmartVillageAppMainserver::ApolloHTTPAdapter),
+      execute: SmartVillageAppMainserver::ApolloHTTPAdapter
+    )
+
+    ApolloClient.allow_dynamic_queries = true
+  end
 end
