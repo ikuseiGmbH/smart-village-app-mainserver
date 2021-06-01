@@ -2,6 +2,7 @@
 
 module Mutations
   class CreateGenericItem < BaseMutation
+    argument :id, ID, required: false
     argument :force_create, Boolean, required: false
     argument :push_notification, Boolean, required: false
     argument :author, String, required: false
