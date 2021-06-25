@@ -136,7 +136,7 @@ module Types
     # @return [Object] object with the contents of the file, if it exists - otherwise with {}
     def public_json_file(name:)
       static_content = StaticContent.where(name: name, data_type: "json").first
-      return { content: static_content.content, name: name } if static_content.present?
+      return { content: JSON.parse(static_content.content), name: name } if static_content.present?
 
       { content: {}, name: "not found" }
     end
